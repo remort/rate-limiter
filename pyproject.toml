@@ -1,11 +1,10 @@
 [tool.poetry]
 name = "rate-limiter-decorator"
-version = "0.0.7"
+version = "0.0.8"
 description = "A Python async rate limiter using Redis and Lua with sliding window algorithm. Supports retries, exponential backoff, and optional exception handling."
 authors = ["Вадим Бажов <master@remort.net>"]
 readme = "README.md"
 packages = [{include = "rate_limiter", from = "src"}]
-
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.4.2"
@@ -24,3 +23,50 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.dependencies]
 python = "^3.10"
 redis = "^6.4.0"
+
+[tool.ruff]
+exclude = [
+    ".git",
+    "__pycache__",
+]
+
+lint.ignore = ["D10", "D203", "D213", "D401", "D212", "D413"]
+line-length = 99
+lint.select = [
+    "C9",  # mccabe
+    "D",  # pycodestyle
+    "E",  # error
+    "F",  # pyflakes
+    "W",  # warning
+    "Q",  # flake8-quotes
+    "T20",  # flake8-print
+    "SIM",  # flake8-simplify
+    "ERA",  # flake8-eradicate
+    "DTZ",  # flake8-datetimez
+    "UP",  # pyupgrade
+    "FBT",  # flake8-boolean-trap
+    "I",  # isort
+    "RUF",  # ruff specific
+    "PL",  # pylint
+    "PIE",  # flake8-pie
+    "G",  # flake8-logging-format
+    "C4",  # flake8-comprehensions
+    "N",  # pep8-naming
+    "COM",  # flake8-commas
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 7
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [
+    "F401",
+    "F403",
+]
+"tests/**/test_*.py" = ["D10", "PLR2004"]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.lint.flake8-implicit-str-concat]
+allow-multiline = false

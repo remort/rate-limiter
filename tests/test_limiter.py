@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from rate_limiter import RateLimit
-from rate_limiter.exceptions import RetryLimitReached
+from rate_limiter.exceptions import RetryLimitReachedError
 
 log: logging.Logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ async def test_rate_limit_hit_with_retry():
     lua_mock.side_effect = [
         [1, 0, 100],
         [2, 0, 100],
-        [3, 1, 0]
+        [3, 1, 0],
     ]
     redis_mock.register_script.return_value = lua_mock
 
@@ -108,8 +108,8 @@ async def test_retry_on_exceptions_logged(caplog):
     wrapped = rate_limit(fn=my_fn, key='test')
     caplog.set_level(logging.WARNING)
     with (
-        pytest.raises(RetryLimitReached),
-        patch("asyncio.sleep", new=AsyncMock()),
+        pytest.raises(RetryLimitReachedError),
+        patch('asyncio.sleep', new=AsyncMock()),
     ):
         result = await wrapped()
 
@@ -138,9 +138,11 @@ async def test_unhandled_exception_stops():
         raise RuntimeError('stop')
 
     wrapped = rate_limit(fn=my_fn, key='test')
-    with patch("asyncio.sleep", new=AsyncMock()):
-        with pytest.raises(RuntimeError):
-            await wrapped()
+    with (
+        patch('asyncio.sleep', new=AsyncMock()),
+        pytest.raises(RuntimeError),
+    ):
+        await wrapped()
 
 
 @pytest.mark.asyncio
@@ -190,7 +192,7 @@ async def test_exponential_backoff_and_wait_ms():
     # simulate first call blocked w/wait_ms, then allowed
     lua_mock.side_effect = [
         [1, 0, 500],
-        [2, 1, 0]
+        [2, 1, 0],
     ]
     redis_mock.register_script.return_value = lua_mock
 
@@ -242,7 +244,7 @@ async def test_high_rps_limit_concurrent(redis_mock):
     async def run_task(i: int):
         try:
             return await limited_task(i)
-        except RetryLimitReached:
+        except RetryLimitReachedError:
             return None
 
     # Launch 31 concurrent tasks

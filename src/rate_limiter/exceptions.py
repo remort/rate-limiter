@@ -2,5 +2,5 @@ class BaseRetrierError(Exception):
     ...
 
 
-class RetryLimitReached(BaseRetrierError):
+class RetryLimitReachedError(BaseRetrierError):
     ...

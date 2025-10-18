@@ -1,6 +1,7 @@
-import pytest
-from unittest.mock import MagicMock
 from typing import Any
+from unittest.mock import MagicMock
+
+import pytest
 
 
 @pytest.fixture
@@ -56,8 +57,7 @@ def redis_mock() -> Any:
             # earliest timestamp in the window
             earliest = timestamps[0]
             wait_ms = window_ms - (now - earliest)
-            if wait_ms < 0:
-                wait_ms = 0
+            wait_ms = max(wait_ms, 0)
 
         return [count, allowed, int(wait_ms)]
 

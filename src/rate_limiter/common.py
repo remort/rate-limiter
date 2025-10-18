@@ -1,14 +1,14 @@
 import asyncio
 import logging
 import time
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Callable, Optional, Tuple, Type, TypeVar
+from typing import TypeVar
 
 from redis.asyncio import Redis
 from typing_extensions import ParamSpec
 
-from rate_limiter.exceptions import RetryLimitReached
+from rate_limiter.exceptions import RetryLimitReachedError
 
 log: logging.Logger = logging.getLogger(__name__)
 
@@ -47,13 +47,13 @@ class RateLimit:
     retries: int = 3
     backoff_ms: int = 10
     backoff_factor: float = 1.0
-    retry_on_exceptions: Tuple[Type[BaseException], ...] = ()
+    retry_on_exceptions: tuple[type[BaseException], ...] = ()
     logger: logging.Logger = log
 
     def __post_init__(self) -> None:
         self._lua_script = self.redis.register_script(SLIDING_WINDOW_LUA_SCRIPT)
 
-    async def is_execution_allowed(self, key: str) -> Tuple[bool, int]:
+    async def is_execution_allowed(self, key: str) -> tuple[bool, int]:
         now: int = int(time.time() * 1000)
         count_allowed = await self._lua_script(keys=[key], args=[now, self.window, self.limit])
         count, allowed, wait_ms = count_allowed
@@ -67,7 +67,7 @@ class RateLimit:
 
     def __call__[T, **P](
         self,
-        fn: Optional[TargetFunction[T, P]] = None,
+        fn: TargetFunction[T, P] | None = None,
         *,
         key: str,
     ) -> TargetFunction[T, P]:
@@ -110,7 +110,7 @@ class RateLimit:
                 self.logger.error(
                     'All %s attempts exhausted for %s. Giving up.', self.retries, key,
                 )
-                raise RetryLimitReached('Attempts limit reached.')
+                raise RetryLimitReachedError('Attempts limit reached.')
 
             return wrapper
 
